@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run chart-releaser
-        uses: - uses: "vishnoisuresh/helm-chart-releaser-action@helm-chart-releaser-action@v1.0.0"
+        uses: "vishnoisuresh/helm-chart-releaser-action@helm-chart-releaser-action@v1.0.0"
         with:
           gh_token: ${{ secrets.GITHUB_TOKEN }}
           chart_repository_url: oci://ghcr.io/suvi29/app-of-apps-helm
