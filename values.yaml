@@ -1,0 +1,71 @@
+layoutValues:
+  zoneName: nil
+  stageName: nil
+  clusterName: nil
+  
+
+projects:
+
+  cluster-config:
+    annotations:
+      project: test
+    labels:
+      project: test
+    description: Project for overall cluster configuration
+    namespace: openshift-gitops
+    sourceRepos:
+    - https://github.com/Yantra-Vinyasa/app-factory.git
+    destinations: |
+      - namespace: '*'
+        server: https://kubernetes.default.svc
+    extraFields: |
+      clusterResourceWhitelist:
+      - group: '*'
+        kind: '*'
+
+default:
+  app:
+    enableAutoSync: true
+    autoSyncPrune: "true"
+    destination:
+      namespace: null
+      server: https://kubernetes.default.svc
+    project: cluster-config
+    chart: null
+    repoURL: CHANGE_ME
+    appsrepoURL: https://github.com/Yantra-Vinyasa/app-factory.git
+    appstargetRevision: main
+    targetRevision: HEAD
+    CreateNamespace: "false"
+    # Keep the original value flags, but add the missing ones
+    cluster_values: false # Cluster-specific values
+    stage_values: false  # Stage-specific values
+    zone_values: false   # Zone-specific values
+
+    ## should always be false and just used to remove an app including all created resources completely from clusters 
+    ## e.g.:
+    ## - set deletionFinalizers --> true
+    ## - sync app 
+    ## - set enabled --> false or delete app completely
+    ## result: app is removed from argoCD and all related resources with it from openshift
+    deletionFinalizers:
+      enabled: false
+      mode: foreground
+
+
+applications:
+  ####### base_apps
+  openshift-compliance-operator:
+    enabled: true
+    syncwave: -10
+    destination:
+      namespace: openshift-config
+    targetRevision: 1.0.0
+    Replace: true
+
+  openshift-compliance-instance:
+    enabled: true
+    syncwave: 1
+    destination:
+      namespace: openshift-config
+    targetRevision: 1.0.0

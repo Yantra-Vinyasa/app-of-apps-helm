@@ -1,0 +1,106 @@
+{{- /*
+Define layout variables for consistent naming and organization
+*/ -}}
+{{- $layout := .Values.layoutValues }}
+{{- $zone := $layout.zoneName }}
+{{- $stage := $layout.stageName }}
+{{- $cluster := $layout.clusterName }}
+
+{{- range $appKey,$appValue := .Values.applications }}
+{{- /* Create a more structured app naming convention based purely on layout values */ -}}
+{{- $appFullName := printf "%s-%s-%s" $stage $zone $appKey }}
+{{- $_ := set $ "currentAppName" $appFullName }}
+{{- if $appValue.enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "{{ $appValue.syncwave | default "0" }}"
+  {{- /* Handle deletion finalizers with improved variable naming */ -}}
+  {{- $deletionFinalizers := $appValue.deletionFinalizers | default $.Values.default.app.deletionFinalizers }}
+  {{- if ($deletionFinalizers.enabled | default $.Values.default.app.deletionFinalizers.enabled) }}
+  finalizers:
+    {{- if eq ($deletionFinalizers.mode | default $.Values.default.app.deletionFinalizers.mode) "background" }}
+    - resources-finalizer.argocd.argoproj.io/background
+    {{- else }}
+    - resources-finalizer.argocd.argoproj.io
+    {{- end }}
+  {{- end }}
+  name: {{ $appKey }}
+  namespace: openshift-gitops
+spec:
+  destination:
+    namespace: {{ $appValue.destination.namespace | default $.Values.default.app.destination.namespace | required (printf "No destination.namespace specified for %s" $appKey ) }}
+    server: {{ $appValue.destination.server | default $.Values.default.app.destination.server | required (printf "No destination.server specified for %s" $appKey ) }}
+  info:
+  - name: Description
+    value: Deploy and configure {{ $appKey }} for {{ $appFullName }}
+  {{- if $.Values.projectOverride }}
+  project: {{ $.Values.projectOverride }}
+  {{- else }}
+  project: {{ $appValue.project | default $.Values.default.app.project | required (printf "No project specified for %s" $appKey ) }}
+  {{- end }}
+  {{- if $appValue.enableAutoSync | default $.Values.default.app.enableAutoSync }}
+  syncPolicy:
+    automated:
+      prune: {{ $appValue.autoSyncPrune | default $.Values.default.app.autoSyncPrune | default true }}
+      selfHeal: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 10m
+      limit: 5
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - CreateNamespace={{ $appValue.CreateNamespace | default $.Values.default.app.CreateNamespace }}
+      {{- if $appValue.DeleteNamespace }}
+      - DeleteNamespace={{ $appValue.DeleteNamespace }}
+      {{- end }}
+      {{- if $appValue.ServerSideApply }}
+      - ServerSideApply={{ $appValue.ServerSideApply }}
+      {{- end }}
+      {{- if $appValue.Replace }}
+      - Replace={{ $appValue.Replace }}
+      {{- end }}
+  {{- end }}
+  {{- if $appValue.ignoreDifferences }}
+  ignoreDifferences:
+{{ toYaml $appValue.ignoreDifferences | indent 4 }}
+  {{- end }}
+  sources:
+    - helm:
+        valuesObject:
+          layoutValues:
+            zoneName: {{ $zone }}
+            stageName: {{ $stage }}
+            clusterName: {{ $cluster }}
+        valueFiles:
+        {{- /* Use original naming convention but add missing levels */ -}}
+        {{- if $appValue.zone_values | default $.Values.default.app.zone_values }}
+          - $values/cluster/{{ $zone }}/values/value-{{ $appKey }}.yaml
+        {{- end }}
+        {{- if $appValue.stage_values | default $.Values.default.app.stage_values }}
+          - $values/cluster/{{ $zone }}/{{ $stage }}/values/value-{{ $appKey }}.yaml
+        {{- end }}
+        {{- if $appValue.cluster_values | default $.Values.default.app.cluster_values }}
+          - $values/cluster/{{ $zone }}/{{ $stage }}/{{ $cluster }}/values/value-{{ $appKey }}.yaml
+        {{- end }}
+      repoURL: {{ $appValue.repoURL | default $.Values.default.app.repoURL | required (printf "No repoURL specified for %s" $appKey ) }}
+      {{- if $appValue.path }}
+      path: {{ $appValue.path }}
+      {{- else }}
+      chart: {{ $appValue.chart | default $appKey }}
+      {{- end }}
+      targetRevision: {{ $appValue.targetRevision | required (printf "No source.targetRevision specified for %s" $appKey ) }}
+    - ref: values
+      repoURL: {{ $appValue.appsrepoURL | default $.Values.default.app.appsrepoURL }}
+      targetRevision: {{ $appValue.appstargetRevision | default $.Values.default.app.appstargetRevision }}
+  {{- if $appValue.extraFields }}
+    {{ include "common.tplvalues.render" (dict "value" $appValue.extraFields "context" $ "scope" (dict "AppName" $appKey "FullName" $appFullName)) | indent 2 }}
+  {{- else if $.Values.default.app.extraFields }}
+    {{ include "common.tplvalues.render" (dict "value" $.Values.default.app.extraFields "context" $ "scope" (dict "AppName" $appKey "FullName" $appFullName)) | indent 2 }}
+  {{- end }}
+{{- end }}
+{{- end }}
