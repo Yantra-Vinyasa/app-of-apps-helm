@@ -20,4 +20,4 @@ jobs:
           chart_repository_url: oci://ghcr.io/suvi29/app-of-apps-helm
           chart_repository_username: ${{ github.actor }}
           chart_repository_password: ${{ secrets.GITHUB_TOKEN }}
-          charts_dir: .
+          charts_dir: "."
