@@ -10,7 +10,7 @@ permissions:
   packages: write
   issues: write
   pull-requests: write
-  
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -25,15 +25,15 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.CR_PAT }}
 
       - name: Run chart-releaser
         uses: vishnoisuresh/helm-chart-releaser-action@v1.0.3
         with:
-          gh_token: ${{ secrets.GITHUB_TOKEN }}
+          gh_token: ${{ secrets.CR_PAT }}
           chart_repository_url: oci://ghcr.io/suvi29/app-of-apps-helm
           chart_repository_username: ${{ github.actor }}
-          chart_repository_password: ${{ secrets.GITHUB_TOKEN }}
+          chart_repository_password: ${{ secrets.CR_PAT }}
           charts_dir: "."
 
 
