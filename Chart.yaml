@@ -1,5 +1,5 @@
 apiVersion: v2
 name: app-of-apps-helm
 description: App-of-apps Master chart
-version: 0.0.12
-home: https://github.com/Yantra-Vinyasa/app-of-apps-helm.git
+version: 0.0.13
+home: https://github.com/yantra-vinyasa/app-of-apps-helm.git
