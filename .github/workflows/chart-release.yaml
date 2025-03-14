@@ -31,7 +31,7 @@ jobs:
         uses: vishnoisuresh/helm-chart-releaser-action@v1.0.3
         with:
           gh_token: ${{ secrets.CR_PAT }}
-          chart_repository_url: oci://ghcr.io/suvi29/app-of-apps-helm
+          chart_repository_url: oci://ghcr.io/Yantra-Vinyasa/app-of-apps-helm
           chart_repository_username: ${{ github.actor }}
           chart_repository_password: ${{ secrets.CR_PAT }}
           charts_dir: "."
