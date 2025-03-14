@@ -31,3 +31,5 @@ jobs:
           chart_repository_username: ${{ github.actor }}
           chart_repository_password: ${{ secrets.GITHUB_TOKEN }}
           charts_dir: "."
+
+
