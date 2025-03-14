@@ -5,14 +5,11 @@ on:
     branches:
       - main
 
-
-
 jobs:
   release:
     permissions:
       contents: write
       packages: write
-
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,8 +29,6 @@ jobs:
         with:
           gh_token: ${{ secrets.CR_PAT }}
           chart_repository_url: oci://ghcr.io/Yantra-Vinyasa/app-of-apps-helm
-          chart_repository_username: ${{ github.actor }}
+          chart_repository_username: ${{ github.repository_owner }}
           chart_repository_password: ${{ secrets.CR_PAT }}
           charts_dir: "."
-
-
